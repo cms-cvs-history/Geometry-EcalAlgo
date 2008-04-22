@@ -1,0 +1,2 @@
+es_module = EcalBarrelGeometryEP    { untracked bool applyAlignment = false }
+  
