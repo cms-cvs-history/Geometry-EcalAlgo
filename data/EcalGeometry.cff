@@ -1,3 +1,0 @@
-include "Geometry/EcalAlgo/data/EcalBarrelGeometry.cfi"
-include "Geometry/EcalAlgo/data/EcalEndcapGeometry.cfi"
-include "Geometry/EcalAlgo/data/EcalPreshowerGeometry.cfi"
