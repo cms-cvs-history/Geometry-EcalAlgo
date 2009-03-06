@@ -101,30 +101,18 @@ EcalPreshowerGeometry::getClosestCellInPlane( const GlobalPoint& point,
   //Find zside
   int zside = ( z > 0.) ? +1 : -1;
   
-  if (plane == 1)
-    {
-      try
-	{
-	  if (present(ESDetId(istr, col, row, 1, zside)))
-	    return  DetId(ESDetId(istr, col, row, 1, zside));
-	}
-      catch ( cms::Exception &e ) 
-	{ 
-	  return DetId(0);
-	}
-    }
-  else if (plane == 2)
-    {
-      try
-	{
-	  if (present(ESDetId(istr, row, col, 2, zside)))
-	    return  DetId(ESDetId(istr, row, col, 2, zside));
-	}
-      catch ( cms::Exception &e ) 
-	{ 
-	  return DetId(0);
-	}
-    }
+  const DetId esid ( ESDetId::validDetId( istr,
+					  1 == plane ? col : row,
+					  1 == plane ? row : col,
+					  plane,
+					  zside  ) ?
+		     DetId( ESDetId(             istr,
+						 1 == plane ? col : row,
+						 1 == plane ? row : col,
+						 plane,
+						 zside  ) ) :
+		     DetId(0) ) ;
 
-  return DetId(0);
+  return ( present( esid ) && 
+	   !esid.null()       ? esid : DetId(0) ) ;
 }
