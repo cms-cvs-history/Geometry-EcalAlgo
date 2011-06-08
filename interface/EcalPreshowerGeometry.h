@@ -26,7 +26,7 @@ class EcalPreshowerGeometry : public CaloSubdetectorGeometry
 
       enum { k_NumberOfCellsForCorners = ESDetId::kSizeForDenseIndexing } ;
 
-      enum { k_NumberOfShapes = 2 } ;
+      enum { k_NumberOfShapes = 4 } ;
 
       enum { k_NumberOfParametersPerShape = 4 } ;
 
