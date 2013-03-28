@@ -96,6 +96,10 @@ class EcalEndcapGeometry : public CaloSubdetectorGeometry
 			    const CCGFloat*    parm ,
 			    const DetId&       detId   ) ;
 
+      virtual void getSummary( TrVec&  trVector,
+			       IVec&   iVector,
+			       DimVec& dimVector   ) const ;
+
    protected:
 
       virtual const CaloCellGeometry* cellGeomPtr( uint32_t index ) const ;
