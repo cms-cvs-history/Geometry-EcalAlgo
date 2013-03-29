@@ -76,7 +76,7 @@ EcalEndcapGeometry::initializeParms()
   unsigned nN=0;
   m_nref = 0 ;
 
-  for( uint32_t i ( 0 ) ; i != m_cellVec.size() ; ++i )
+  for( uint32_t i ( 0 ) ; i != m_cellVec.size()/2 ; ++i )
   {
      const CaloCellGeometry* cell ( cellGeomPtr(i) ) ;
      if( 0 != cell )
@@ -110,7 +110,7 @@ EcalEndcapGeometry::initializeParms()
   m_xhi[1] = -999 ;
   m_ylo[1] =  999 ;
   m_yhi[1] = -999 ;
-  for( uint32_t i ( 0 ) ; i != m_cellVec.size() ; ++i )
+  for( uint32_t i ( 0 ) ; i != m_cellVec.size()/2 ; ++i )
   {
      const CaloCellGeometry* cell ( cellGeomPtr(i) ) ;
      if( 0 != cell )
@@ -190,6 +190,41 @@ EcalEndcapGeometry::yindex( CCGFloat y,
 	    ( m_nref < (unsigned int) i ? m_nref : (unsigned int) i ) ) ;
 }
 
+DetId 
+EcalEndcapGeometry::getClosestCell( const GlobalPoint& r ) const 
+{
+   CCGFloat closest ( 1.e9 ) ;
+   DetId returnId ( 0 ) ;
+//   const CCGFloat eta ( r.eta() ) ;
+//   const CCGFloat phi ( r.phi() ) ;
+   const CaloSubdetectorGeometry::DetIdSet dis ( getCells( r, M_PI/50. ) ) ;
+   for( CaloSubdetectorGeometry::DetIdSet::const_iterator id ( dis.begin() ); id != dis.end() ; ++id )
+   {
+      const unsigned int i ( CaloGenericDetId( *id ).denseIndex() ) ;
+      const CaloCellGeometry* cell ( cellGeomPtr( i ) ) ;
+      if( 0 != cell )
+      {
+	 if( cell->inside( r ) ) 
+	 {
+	    returnId = *id ;
+	    break ;
+	 }
+	 const GlobalPoint& p ( cell->getPosition() ) ;
+//	 const CCGFloat eta0 ( p.eta() ) ;
+//	 const CCGFloat phi0 ( p.phi() ) ;
+//	 const CCGFloat dR2 ( reco::deltaR2( eta0, phi0, eta, phi ) ) ;
+	 const CCGFloat dR2 ( (p-r).mag2() ) ;
+	 if( dR2 < closest ) 
+	 {
+	    closest = dR2 ;
+	    returnId = *id ;
+	 }
+      }
+   }
+   return returnId ;
+}
+
+/*
 EEDetId 
 EcalEndcapGeometry::gId( float x, 
 			 float y, 
@@ -340,11 +375,12 @@ EcalEndcapGeometry::getClosestCell( const GlobalPoint& r ) const
    }
    return DetId(0);
 }
-
+*/
 CaloSubdetectorGeometry::DetIdSet 
 EcalEndcapGeometry::getCells( const GlobalPoint& r, 
 			      double             dR ) const 
 {
+//   std::cout<<"entering getCells"<<std::endl;
    CaloSubdetectorGeometry::DetIdSet dis ; // return object
    if( 0.000001 < dR )
    {
@@ -402,16 +438,24 @@ EcalEndcapGeometry::getCells( const GlobalPoint& r,
 		     if( ky >  0      && 
 			 ky <= (int) m_nref    )
 		     {
-			if( EEDetId::validDetId( kx, ky, iz ) ) // reject invalid ids
+			for( int kz (1); kz<=2; ++kz)
 			{
-			   const EEDetId id ( kx, ky, iz ) ;
-			   const CaloCellGeometry* cell ( getGeometry( id ) );
-			   if( 0 != cell )
+			   if( EEDetId::validDetId( kx, ky, iz*kz ) ) // reject invalid ids
 			   {
-			      const GlobalPoint& p    ( cell->getPosition() ) ;
-			      const double       eta  ( p.eta() ) ;
-			      const double       phi  ( p.phi() ) ;
-			      if( reco::deltaR2( eta, phi, reta, rphi ) < dR2 ) dis.insert( id ) ;
+			      const EEDetId id ( kx, ky, iz*kz ) ;
+			      const CaloCellGeometry* cell ( getGeometry( id ) );
+			      if( 0 != cell )
+			      {
+				 const GlobalPoint& p    ( cell->getPosition() ) ;
+				 const double       eta  ( p.eta() ) ;
+				 const double       phi  ( p.phi() ) ;
+				 const double distance2 ( reco::deltaR2( eta, phi, reta, rphi ) ) ;
+				 if( distance2 < dR2 ) 
+				 {
+//				    std::cout<<"getCells:adding id="<<id<<std::endl;
+				    dis.insert( id ) ;
+				 }
+			      }
 			   }
 			}
 		     }
@@ -487,9 +531,9 @@ EcalEndcapGeometry::newCell( const GlobalPoint& f1 ,
    const unsigned int cellIndex ( EEDetId( detId ).denseIndex() ) ;
    m_cellVec[ cellIndex ] =
       TruncatedPyramid( cornersMgr(), f1, f2, f3, parm ) ;
+   if( fabs(f1.z())<300. ) std::cout<<"***For id="<<EEDetId(detId)<<" bad z:"<<f1<<std::endl;
    m_validIds.push_back( detId ) ;
 }
-
 
 CCGFloat 
 EcalEndcapGeometry::avgAbsZFrontFaceCenter() const
@@ -497,7 +541,7 @@ EcalEndcapGeometry::avgAbsZFrontFaceCenter() const
    if( 0 > m_avgZ )
    {
       CCGFloat sum ( 0 ) ;
-      for( unsigned int i ( 0 ) ; i != m_cellVec.size() ; ++i )
+      for( unsigned int i ( 0 ) ; i != m_cellVec.size()/2 ; ++i )
       {
 	 const CaloCellGeometry* cell ( cellGeomPtr(i) ) ;
 	 if( 0 != cell )
@@ -505,7 +549,7 @@ EcalEndcapGeometry::avgAbsZFrontFaceCenter() const
 	    sum += fabs( cell->getPosition().z() ) ;
 	 }
       }
-      m_avgZ = sum/m_cellVec.size() ;
+      m_avgZ = 2*sum/m_cellVec.size() ;
    }
    return m_avgZ ;
 }
